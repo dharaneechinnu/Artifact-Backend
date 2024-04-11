@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors');
 const mongoose = require('mongoose');
-const Auction = require('./Model/AddAuction'); // Import the Auction model
+const Auction = require('./Model/AddAuction'); 
 const PORT = process.env.PORT|| 3510;
 const MONGODB_URL = process.env.MONGO_URL
 const app = express();
@@ -35,11 +35,14 @@ app.get('/api/auctions/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const auction = await Auction.findById(id); // Find the auction by ID in the database
+  
+    const auction = await Auction.findById(id);
+    console.log("Backend : ",auction)
     if (!auction) {
       return res.status(404).json({ message: 'Auction not found' });
     }
-    res.status(200).json(auction);
+   const print =  res.status(200).json(auction);
+   console.log(print)
   } catch (error) {
     console.error('Error fetching auction:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -75,10 +78,12 @@ app.get('/userAuctions', async (req, res) => {
   const userId = req.query.userId;
 
   try {
-    // Fetch auctions where the creator's userId matches the provided userId
+    console.log("Backend : ",userId)
     const userAuctions = await Auction.find({ userId: userId });
 
-    res.status(200).json(userAuctions);
+   const print = res.status(200).json(userAuctions);
+   console.log(print)
+
   } catch (error) {
     console.error('Error fetching user auctions:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -90,7 +95,7 @@ app.delete('/api/auctions/:id', async (req, res) => {
   const auctionId = req.params.id;
 
   try {
-    // Find the auction item by ID and delete it
+  
     const deletedAuction = await Auction.findByIdAndDelete(auctionId);
     if (!deletedAuction) {
       return res.status(404).json({ message: 'Auction item not found' });
@@ -108,23 +113,23 @@ app.post('/api/auctions/:id/bid', async (req, res) => {
   const { amount, userId } = req.body;
   console.log("Before : ",auctionId,amount,userId);
   try {
-    // Fetch the auction by ID
+  
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       return res.status(404).json({ message: 'Auction not found' });
     }
 
-    // Check if the bid amount is valid
+   
     if (isNaN(amount) || amount <= auction.highestBid) {
       return res.status(400).json({ message: 'Invalid bid amount' });
     }
 
-    // Update the auction details with the new bid
+   
     auction.highestBid = amount;
     auction.winningBidder = userId;
     await auction.save();
 
-    // Respond with updated auction details
+  
     res.status(200).json({
       highestBid: auction.highestBid,
       winningBidder: auction.winningBidder
@@ -155,6 +160,18 @@ app.put('/api/joinAuction/:id', (req, res) => {
   }
 });
 
+app.put('/api/auctions/:id', async (req, res) => {
+  const { id } = req.params;
+  const updatedAuctionData = req.body;
+
+  try {
+    const updatedAuction = await Auction.findByIdAndUpdate(id, updatedAuctionData, { new: true });
+    res.status(200).json(updatedAuction);
+  } catch (error) {
+    console.error('Error updating auction:', error);
+    res.status(500).json({ error: 'Failed to update auction' });
+  }
+});
 
 
 
